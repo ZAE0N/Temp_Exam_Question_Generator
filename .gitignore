@@ -1,0 +1,54 @@
+# ===== OS 생성 파일 =====
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# OneDrive
+*.tmp
+~$*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===== 에디터 / IDE =====
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*.code-workspace
+
+# ===== Node (혹시 추후 도입 시) =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# ===== 로그 / 임시 =====
+*.log
+*.bak
+.cache/
+
+# ===== 개인 문제 파일 (샘플 제외, 직접 만든 문제 파일은 올리지 않음) =====
+# 기본 샘플(문제.txt, sample-questions.js)은 추적합니다.
+# 본인이 만든 추가 문제 파일을 올리고 싶지 않다면 아래 패턴을 활용하세요.
+my-*.txt
+my-*.js
+private-*.txt
+private-*.js
