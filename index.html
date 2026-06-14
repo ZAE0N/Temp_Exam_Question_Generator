@@ -55,6 +55,8 @@
         <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
       </header>
 
+      <div id="review-scope" class="review-scope" hidden></div>
+
       <main id="question-area" class="question-area"></main>
 
       <footer class="quiz-footer">
@@ -67,6 +69,7 @@
     <!-- 3. 결과 화면 -->
     <section id="screen-result" class="screen" hidden>
       <h1>📊 시험 결과</h1>
+
       <div class="result-card">
         <div class="score-circle">
           <span id="score-rate">0%</span>
@@ -76,24 +79,27 @@
           전체 <strong id="result-total">0</strong>문항 중
           <strong id="result-correct">0</strong>문항 정답
         </p>
+        <p id="score-message" class="score-message"></p>
         <ul class="result-breakdown">
           <li>객관식: <strong id="result-mc">0 / 0</strong></li>
           <li>주관식(자가 채점): <strong id="result-short">0 / 0</strong></li>
         </ul>
       </div>
 
-      <h2 class="result-list-title">문항별 결과 <span class="hint">(클릭하면 해당 문제를 다시 볼 수 있어요)</span></h2>
+      <div class="result-actions">
+        <button id="btn-review" class="btn" type="button">문제 다시 보기</button>
+        <button id="btn-retry" class="btn" type="button">같은 문제로 다시 시작</button>
+        <button id="btn-restart" class="btn btn-primary" type="button">다른 파일로 다시 시작</button>
+      </div>
+
+      <h2 class="result-list-title">문항별 결과 <span class="hint">(문항을 클릭하면 현재 탭의 문항만 이전/다음으로 넘겨보며 다시 풀 수 있어요)</span></h2>
       <div class="result-filter">
         <button class="filter-btn active" type="button" data-filter="all">전체</button>
         <button class="filter-btn" type="button" data-filter="ok">정답만</button>
         <button class="filter-btn" type="button" data-filter="no">오답만</button>
+        <button class="filter-btn" type="button" data-filter="skip">미응답</button>
       </div>
       <div id="result-list" class="result-list"></div>
-
-      <div class="result-actions">
-        <button id="btn-review" class="btn" type="button">문제 다시 보기</button>
-        <button id="btn-restart" class="btn btn-primary" type="button">다른 파일로 다시 시작</button>
-      </div>
     </section>
   </div>
 
