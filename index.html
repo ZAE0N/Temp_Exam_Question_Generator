@@ -49,6 +49,7 @@
       <header class="quiz-header">
         <div class="progress-info">
           <button id="btn-home" class="btn btn-home" type="button" title="처음으로">📝 처음 화면으로</button>
+          <button id="btn-back-result" class="btn btn-back-result" type="button" title="결과 화면으로" hidden>결과 보기</button>
           <span id="q-position">1 / 60</span>
           <span id="q-type-badge" class="badge">객관식</span>
         </div>
@@ -68,7 +69,10 @@
 
     <!-- 3. 결과 화면 -->
     <section id="screen-result" class="screen" hidden>
-      <h1>📊 시험 결과</h1>
+      <div class="result-head">
+        <h1>📊 시험 결과</h1>
+        <button id="btn-export" class="btn" type="button">📥 결과 내보내기</button>
+      </div>
 
       <div class="result-card">
         <div class="score-circle">
