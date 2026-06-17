@@ -15,6 +15,10 @@
 
 * { box-sizing: border-box; }
 
+/* 내용이 길어져 스크롤바가 생겨도 가운데 정렬 레이아웃이 밀리지 않도록
+   스크롤바 자리를 항상 확보 (정답 체크 시 화면이 살짝 움직이던 현상 방지) */
+html { scrollbar-gutter: stable; }
+
 body {
   margin: 0;
   font-family: "Pretendard", "Malgun Gothic", "맑은 고딕", system-ui, -apple-system, sans-serif;
@@ -114,6 +118,20 @@ code {
   transition: all 0.12s;
 }
 .btn-remove:hover { background: var(--wrong-bg); border-color: #fecaca; color: var(--wrong); }
+
+/* 업로드한 파일 삭제 버튼: 눈에 잘 띄도록 빨간색 강조 */
+#btn-remove {
+  background: var(--wrong);
+  border-color: var(--wrong);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+#btn-remove:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #fff;
+  transform: scale(1.08);
+}
 .loaded-file {
   display: inline-flex;
   align-items: center;
@@ -153,6 +171,15 @@ code {
   color: #fff;
 }
 .btn-home:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.btn-back-result {
+  padding: 11px 22px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background: #fff;
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.btn-back-result:hover { background: #eef2ff; }
 #q-position { font-weight: 700; color: var(--muted); margin-left: auto; }
 .badge {
   font-size: 0.78rem;
@@ -163,8 +190,78 @@ code {
   font-weight: 600;
 }
 .badge.short { background: #fff7ed; color: #c2410c; }
+.badge.matching { background: #ecfeff; color: #0e7490; }
 .progress-bar { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
+/* ---- 풀이 시간 타이머 ---- */
+/* 시작 화면 사용 토글 */
+.timer-option {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 16px 0 6px; color: var(--muted); font-size: 0.95rem;
+}
+.timer-toggle-group { display: inline-flex; gap: 6px; }
+.toggle {
+  border: 1px solid var(--border); background: #fff; color: var(--muted);
+  border-radius: 999px; padding: 6px 16px; font-weight: 700; cursor: pointer;
+}
+.toggle.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* 풀이 화면 표시 + 일시정지/끄기 + '타이머' 사용 버튼 */
+/* display는 hidden 속성을 덮어쓰지 않도록 :not([hidden]) 에만 적용 */
+.timer-box { align-items: center; gap: 6px; }
+.timer-box:not([hidden]) { display: inline-flex; }
+.btn-timer-enable {
+  border: 1px solid var(--primary); background: #fff; color: var(--primary-dark);
+  border-radius: 8px; padding: 4px 12px; font-size: 0.85rem; font-weight: 700;
+  line-height: 1; cursor: pointer;
+}
+.btn-timer-enable:hover { background: #eef2ff; }
+.timer-display {
+  font-variant-numeric: tabular-nums; font-weight: 700; color: var(--primary-dark);
+  background: #eef2ff; border-radius: 8px; padding: 4px 10px; min-width: 58px; text-align: center;
+}
+.timer-box.paused .timer-display { color: var(--muted); background: var(--border); }
+.btn-timer-pause, .btn-timer-off {
+  border: 1px solid var(--border); background: #fff; color: var(--text);
+  border-radius: 8px; padding: 4px 9px; font-size: 0.85rem; line-height: 1; cursor: pointer;
+}
+.btn-timer-pause:hover { border-color: var(--primary); color: var(--primary-dark); }
+.btn-timer-off:hover { border-color: #ef4444; color: #ef4444; }
+/* 결과 화면 풀이 시간 */
+.score-time { color: var(--muted); font-size: 1.05rem; margin: 4px 0; }
+.score-time strong { color: var(--primary-dark); font-variant-numeric: tabular-nums; }
+
+/* ---- '푼 문제로 이동' 커스텀 드롭다운 (헤더, 타이머 왼쪽) ---- */
+.quiz-jump { position: relative; width: 220px; }
+.quiz-jump-btn {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 5px 8px; font-size: 0.8rem; text-align: left;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; color: var(--text); cursor: pointer;
+}
+.quiz-jump-btn:hover { border-color: var(--primary); }
+.quiz-jump-btn:disabled { color: var(--muted); cursor: default; }
+.quiz-jump-btn:disabled:hover { border-color: var(--border); }
+.quiz-jump-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quiz-jump-caret { flex-shrink: 0; color: var(--muted); font-size: 0.7rem; }
+/* 펼친 목록: 버튼과 같은 너비 + 높이 제한 후 휠로 스크롤 */
+.quiz-jump-menu {
+  position: absolute; top: calc(100% + 4px); left: 0;
+  width: 100%; max-height: 240px; overflow-y: auto;
+  margin: 0; padding: 4px; list-style: none;
+  background: #fff; border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); z-index: 50;
+}
+.quiz-jump-menu li {
+  padding: 6px 8px; margin-bottom: 2px; font-size: 0.8rem; border-radius: 6px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.quiz-jump-menu li:last-child { margin-bottom: 0; }
+/* 항목 배경: 정답=초록 / 오답=빨강 / 미응답=회색 (가시성 위해 조금 진하게) */
+.quiz-jump-menu li.ok { background: #c7f0d8; }
+.quiz-jump-menu li.no { background: #fbd5d5; }
+.quiz-jump-menu li.skip { background: #d8dde5; }
+.quiz-jump-menu li:hover { background: #dbe4ff; }
 
 /* ---- 문제 영역 ---- */
 .question-area {
@@ -177,7 +274,7 @@ code {
   /* 푸터(이전/다음)가 화면 하단에 고정돼도 내용이 가리지 않도록 여백 */
   margin-bottom: 90px;
 }
-.q-number { color: var(--primary); font-weight: 700; }
+.q-number { color: var(--primary); font-weight: 700; display: flex; align-items: center; gap: 9px; }
 .q-text { font-size: 1.12rem; font-weight: 600; margin: 6px 0 22px; white-space: pre-wrap; }
 
 /* 객관식 선택지 */
@@ -227,6 +324,7 @@ code {
 }
 .explanation.ok { background: var(--correct-bg); border: 1px solid #bbf7d0; }
 .explanation.no { background: var(--wrong-bg); border: 1px solid #fecaca; }
+.explanation.skip { background: #f1f5f9; border: 1px solid #cbd5e1; }
 .explanation-title { font-weight: 700; margin-bottom: 4px; }
 
 /* 주관식 */
@@ -276,6 +374,58 @@ textarea.short-input:focus { outline: none; border-color: var(--primary); }
 }
 .grade-btn.pick-correct.active { border-color: var(--correct); background: var(--correct-bg); color: var(--correct); font-weight: 700; }
 .grade-btn.pick-wrong.active { border-color: var(--wrong); background: var(--wrong-bg); color: var(--wrong); font-weight: 700; }
+.grade-hint { margin: 10px 2px 0; font-size: 0.86rem; color: var(--wrong); font-weight: 600; }
+
+/* 비활성(예: 주관식 채점 전) 버튼 */
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- 연결형(matching) ---- */
+.matching-box { display: flex; flex-direction: column; gap: 18px; }
+.match-rows { display: flex; flex-direction: column; gap: 12px; }
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 12px 14px;
+  background: #fff;
+}
+.match-left-marker { font-weight: 700; color: var(--primary); flex-shrink: 0; }
+.match-left-text { font-weight: 600; }
+.match-arrow { color: var(--muted); flex-shrink: 0; }
+.match-select {
+  margin-left: auto;
+  min-width: 220px;
+  max-width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: #fff;
+  cursor: pointer;
+}
+.match-select:focus { outline: none; border-color: var(--primary); }
+.match-result { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; }
+.match-result .mark { font-size: 1.05rem; }
+.match-result.ok { color: var(--correct); }
+.match-result.no { color: var(--wrong); }
+.match-correct { color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+
+.match-legend {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.match-legend-title { font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.match-legend-item { font-size: 0.95rem; }
+.match-submit { align-self: stretch; }
 
 /* ---- 퀴즈 푸터 (화면 하단 고정) ---- */
 .quiz-footer {
@@ -295,7 +445,48 @@ textarea.short-input:focus { outline: none; border-color: var(--primary); }
 }
 .quiz-footer .btn { flex: 1; }
 
+/* ---- 풀이 중: 탭 순회 안내 배너 ---- */
+.review-scope[hidden] { display: none; }
+.review-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--primary-dark);
+}
+.review-scope strong { font-weight: 800; }
+.btn-scope-all {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: #fff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn-scope-all:hover { background: #fafbff; border-color: var(--primary); }
+
 /* ---- 결과 ---- */
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.result-head h1 { margin: 0; }
+.result-head .btn { flex: none; white-space: nowrap; }
+
 .result-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -306,62 +497,150 @@ textarea.short-input:focus { outline: none; border-color: var(--primary); }
   margin-bottom: 26px;
 }
 .score-circle {
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
-  margin: 0 auto 18px;
+  margin: 0 auto 14px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: conic-gradient(var(--primary) var(--rate, 0%), var(--border) 0);
 }
 .score-circle span {
-  font-size: 2.1rem;
+  font-size: 2.3rem;
   font-weight: 800;
+  color: var(--text);
   background: #fff;
-  width: 110px;
-  height: 110px;
+  width: 118px;
+  height: 118px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
 }
-.score-circle small { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+.score-label {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 16px;
+}
 .score-detail { font-size: 1.1rem; }
+.score-message {
+  margin: 14px auto 0;
+  max-width: 32ch;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--primary-dark);
+}
 .result-breakdown {
   list-style: none;
   padding: 0;
   display: flex;
-  gap: 24px;
+  gap: 28px;
   justify-content: center;
   color: var(--muted);
-  margin-top: 12px;
+  margin-top: 14px;
+  font-size: 0.98rem;
+}
+.result-breakdown strong { color: var(--text); }
+
+.result-list-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+.result-list-title .hint { font-weight: 400; margin-left: 8px; }
+
+/* ---- 정답/오답 필터 ---- */
+.result-filter { display: flex; gap: 8px; margin-bottom: 14px; }
+.filter-btn {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.filter-btn:hover { border-color: var(--primary); }
+.filter-btn.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
-.result-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+.result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 26px;
+  /* 문항이 많아도 페이지 전체가 길어지지 않도록 목록 내부에서만 스크롤.
+     탭(필터)을 바꿔 항목 수가 달라져도 높이를 고정해 아래 버튼이 밀리지 않게 한다. */
+  height: 460px;
+  overflow-y: auto;
+  padding: 2px 10px 2px 2px;
+}
+.result-list-empty {
+  text-align: center;
+  color: #94a3b8;
+  padding: 28px 0;
+  font-size: 0.95rem;
+}
 .result-item {
   background: var(--card);
   border: 1px solid var(--border);
   border-left-width: 5px;
-  border-radius: 10px;
-  padding: 13px 16px;
+  border-radius: 12px;
+  padding: 15px 18px;
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
+  cursor: pointer;
+  transition: box-shadow 0.12s, border-color 0.12s;
 }
+.result-item:hover { box-shadow: 0 3px 12px rgba(0, 0, 0, 0.09); }
 .result-item.ok { border-left-color: var(--correct); }
 .result-item.no { border-left-color: var(--wrong); }
 .result-item.skip { border-left-color: #cbd5e1; }
-.result-item .ri-num { font-weight: 700; color: var(--muted); flex-shrink: 0; }
-.result-item .ri-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.result-item .ri-mark { font-weight: 700; flex-shrink: 0; }
-.result-item.ok .ri-mark { color: var(--correct); }
-.result-item.no .ri-mark { color: var(--wrong); }
-.result-item.skip .ri-mark { color: #94a3b8; }
+.result-item .ri-num {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--primary-dark);
+  background: #eef2ff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.result-item .ri-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+  /* 한 줄로 자르지 않고 최대 2줄까지 표시해 가독성 확보 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.result-item .ri-mark {
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 5px 13px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  white-space: nowrap;
+}
+.result-item.ok .ri-mark { color: var(--correct); background: var(--correct-bg); }
+.result-item.no .ri-mark { color: var(--wrong); background: var(--wrong-bg); }
+.result-item.skip .ri-mark { color: #64748b; background: #f1f5f9; }
 
-.result-actions { display: flex; gap: 12px; }
+.result-actions { display: flex; gap: 12px; margin-bottom: 22px; }
 .result-actions .btn { flex: 1; }
 
 /* ---- 출제 형식 모달 ---- */
@@ -413,6 +692,13 @@ textarea.short-input:focus { outline: none; border-color: var(--primary); }
   color: var(--primary-dark);
 }
 .rule-doc h4 { font-size: 1rem; margin: 18px 0 8px; color: var(--text); }
+.rule-doc h2 {
+  font-size: 1.3rem;
+  margin: 8px 0 14px;
+  color: var(--primary-dark);
+}
+.rule-doc h5 { font-size: 0.95rem; margin: 14px 0 6px; color: var(--text); font-weight: 700; }
+.rule-doc hr { border: none; border-top: 1px solid #e5e7eb; margin: 22px 0; }
 .rule-doc p { margin: 8px 0; line-height: 1.65; }
 .rule-doc ul { margin: 8px 0; padding-left: 22px; }
 .rule-doc li { margin: 4px 0; line-height: 1.6; }

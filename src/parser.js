@@ -13,7 +13,14 @@ function markerToIndex(ch) {
 
 /* 객체를 내부 표준 형태로 정규화 */
 function normalizeQuestion(q) {
-  const type = (q.type || (q.choices ? "multiple" : "short")).toLowerCase();
+  let type = (
+    q.type ||
+    (Array.isArray(q.pairs) && q.pairs.length ? "matching" : q.choices ? "multiple" : "short")
+  ).toLowerCase();
+  if (type === "연결형" || type === "match" || type === "matching") type = "matching";
+
+  if (type === "matching") return normalizeMatching(q);
+
   if (type === "multiple") {
     // 이 함수에 들어오는 answer 는 이미 0-based 인덱스로 통일된 값입니다.
     return {
@@ -29,6 +36,49 @@ function normalizeQuestion(q) {
     type: "short",
     question: q.question,
     modelAnswer: q.modelAnswer || q.answer || "",
+    explanation: q.explanation || "",
+  };
+}
+
+/* 연결형 정규화
+ * 내부 표준:
+ *   left   : 왼쪽 항목(①②③ 순)
+ *   right  : 오른쪽 보기(left 와 같은 순서 = 각 left 의 정답 보기)
+ *   answer : answer[i] = left[i] 의 정답인 right 인덱스 (0-based)
+ * 입력은 두 가지를 허용:
+ *   (1) pairs: [[왼쪽, 정답오른쪽], ...]  ← 권장. 정답 짝을 그대로 적음
+ *   (2) left / right / answer 분리형 (answer 는 1-based 또는 보기 문자열)
+ */
+function normalizeMatching(q) {
+  let left = [], right = [], answer = [];
+
+  if (Array.isArray(q.pairs) && q.pairs.length) {
+    q.pairs.forEach((p) => {
+      const l = Array.isArray(p) ? p[0] : p.left;
+      const r = Array.isArray(p) ? p[1] : p.right;
+      left.push(String(l));
+      right.push(String(r));
+    });
+    // right[i] 가 곧 left[i] 의 정답
+    answer = left.map((_, i) => i);
+  } else {
+    left = (q.left || []).map(String);
+    right = (q.right || []).map(String);
+    if (Array.isArray(q.answer) && q.answer.length) {
+      answer = q.answer.map((n, i) =>
+        typeof n === "number" ? n - 1 : right.indexOf(String(n)) >= 0 ? right.indexOf(String(n)) : i
+      );
+    } else {
+      answer = left.map((_, i) => i);
+    }
+  }
+
+  return {
+    type: "matching",
+    question: q.question,
+    left,
+    right,
+    answer,
     explanation: q.explanation || "",
   };
 }
@@ -90,7 +140,7 @@ function parseQuestionBlocks(lines) {
   const questions = [];
   let cur = null;
 
-  const startQuestion = (qText, forceShort) => {
+  const startQuestion = (qText, label) => {
     if (cur) questions.push(cur);
     cur = {
       type: "multiple",
@@ -100,7 +150,9 @@ function parseQuestionBlocks(lines) {
       explanation: "",
       modelAnswer: "",
       choiceExplanations: {},
-      _forceShort: !!forceShort,
+      pairs: [],
+      _forceShort: label === "주관식",
+      _forceMatching: label === "연결형",
     };
   };
 
@@ -109,8 +161,8 @@ function parseQuestionBlocks(lines) {
     if (!line) continue;
     if (/^[=\-_*~]{3,}$/.test(line)) continue; // 구분선 무시
 
-    const qMatch = line.match(/^(?:\[(객관식|주관식)\]\s*)?(?:Q\s*)?(\d+)\s*[.)]\s*(.*)$/i);
-    const labelOnly = line.match(/^\[(객관식|주관식)\]\s*(.*)$/);
+    const qMatch = line.match(/^(?:\[(객관식|주관식|연결형)\]\s*)?(?:Q\s*)?(\d+)\s*[.)]\s*(.*)$/i);
+    const labelOnly = line.match(/^\[(객관식|주관식|연결형)\]\s*(.*)$/);
     const munje = line.match(/^문제\s*[:：]\s*(.*)$/);
 
     // 번호로 시작하는 새 문제
@@ -119,20 +171,31 @@ function parseQuestionBlocks(lines) {
         !cur || cur.choices.length > 0 || cur._sawMeta || cur._forceShort;
       // 직전 문제가 본문만 있고 비어있지 않다면 그래도 새 문제로 (번호가 증가하므로)
       if (canStart || true) {
-        startQuestion(qMatch[3], qMatch[1] === "주관식");
+        startQuestion(qMatch[3], qMatch[1]);
         continue;
       }
     }
     if (munje) {
-      startQuestion(munje[1], false);
+      startQuestion(munje[1], undefined);
       continue;
     }
     if (labelOnly && labelOnly[2]) {
-      startQuestion(labelOnly[2], labelOnly[1] === "주관식");
+      startQuestion(labelOnly[2], labelOnly[1]);
       continue;
     }
 
     if (!cur) continue;
+
+    // 연결형: "왼쪽 = 오른쪽" 짝 줄 (=, =>, ->, →, :: 구분자 허용)
+    if (cur._forceMatching) {
+      const isMeta = /^(정답|해설|모범\s*답안|모범답|예시\s*답안|보기\s*해설)\s*[:：]/.test(line);
+      const pair = line.match(/^[-*•]?\s*(.+?)\s*(?:=>|->|→|::|=)\s*(.+?)\s*$/);
+      if (pair && !isMeta) {
+        cur.pairs.push([pair[1].trim(), pair[2].trim()]);
+        cur._sawMeta = true; // 이후 줄이 본문으로 붙는 것 방지
+        continue;
+      }
+    }
 
     // 선택지 ①②③④
     if (markerToIndex(line[0]) >= 0) {
@@ -195,7 +258,12 @@ function parseQuestionBlocks(lines) {
 
   // 후처리
   questions.forEach((q) => {
-    if (q._forceShort || q.choices.length === 0) q.type = "short";
+    if (q._forceMatching && q.pairs.length) {
+      q.type = "matching";
+    } else {
+      if (q._forceShort || q.choices.length === 0) q.type = "short";
+      delete q.pairs; // 연결형이 아니면 불필요
+    }
 
     if (q.choiceExplanations && Object.keys(q.choiceExplanations).length > 0) {
       const arr = [];
@@ -205,6 +273,7 @@ function parseQuestionBlocks(lines) {
       q.choiceExplanations = null;
     }
     delete q._forceShort;
+    delete q._forceMatching;
     delete q._sawMeta;
     delete q._inChoiceExp;
     delete q._lastMeta;

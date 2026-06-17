@@ -35,8 +35,17 @@
         <ul class="type-breakdown">
           <li>객관식 <strong id="count-mc">0</strong>문항</li>
           <li>주관식 <strong id="count-short">0</strong>문항</li>
+          <li id="count-match-row" hidden>연결형 <strong id="count-match">0</strong>문항</li>
         </ul>
         <button id="btn-start" class="btn btn-primary btn-lg" type="button">시험 시작</button>
+      </div>
+
+      <div class="timer-option">
+        <span class="timer-option-label">⏱ 풀이 시간 타이머</span>
+        <div class="timer-toggle-group">
+          <button id="timer-opt-on" class="toggle" type="button">사용</button>
+          <button id="timer-opt-off" class="toggle on" type="button">사용 안 함</button>
+        </div>
       </div>
 
       <div class="rule-link">
@@ -51,7 +60,19 @@
           <button id="btn-home" class="btn btn-home" type="button" title="처음으로">📝 처음 화면으로</button>
           <button id="btn-back-result" class="btn btn-back-result" type="button" title="결과 화면으로" hidden>결과 보기</button>
           <span id="q-position">1 / 60</span>
-          <span id="q-type-badge" class="badge">객관식</span>
+          <div id="quiz-jump" class="quiz-jump" hidden>
+            <button id="quiz-jump-btn" class="quiz-jump-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span id="quiz-jump-label" class="quiz-jump-label">푼 문제로 이동…</span>
+              <span class="quiz-jump-caret" aria-hidden="true">▾</span>
+            </button>
+            <ul id="quiz-jump-menu" class="quiz-jump-menu" role="listbox" hidden></ul>
+          </div>
+          <div id="timer-box" class="timer-box" hidden>
+            <button id="btn-timer-enable" class="btn-timer-enable" type="button" hidden>⏱ 타이머</button>
+            <span id="timer-display" class="timer-display">00:00</span>
+            <button id="btn-timer-pause" class="btn-timer-pause" type="button" title="일시정지">⏸</button>
+            <button id="btn-timer-off" class="btn-timer-off" type="button" title="타이머 끄기">✕</button>
+          </div>
         </div>
         <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
       </header>
@@ -84,9 +105,11 @@
           <strong id="result-correct">0</strong>문항 정답
         </p>
         <p id="score-message" class="score-message"></p>
+        <p id="result-time-row" class="score-time" hidden>⏱ 풀이 시간 <strong id="result-time">00:00</strong></p>
         <ul class="result-breakdown">
           <li>객관식: <strong id="result-mc">0 / 0</strong></li>
           <li>주관식(자가 채점): <strong id="result-short">0 / 0</strong></li>
+          <li id="result-match-row" hidden>연결형: <strong id="result-match">0 / 0</strong></li>
         </ul>
       </div>
 
@@ -116,7 +139,7 @@
       </header>
       <div class="modal-body rule-doc">
         <p>이 규칙대로 파일을 만들면 사이트에 넣었을 때 그대로 시험으로 변환됩니다.
-        형식은 두 가지(<code>.txt</code> / <code>.js</code>), 문제 유형은 <strong>객관식</strong>과 <strong>주관식</strong> 두 가지입니다.</p>
+        형식은 두 가지(<code>.txt</code> / <code>.js</code>), 문제 유형은 <strong>객관식</strong>·<strong>주관식</strong>·<strong>연결형</strong> 세 가지입니다.</p>
 
         <h3>1. TXT 형식</h3>
         <h4>1-1. 권장(인라인) 형식 — 객관식</h4>
@@ -147,6 +170,20 @@
         <ul>
           <li>맨 앞에 <code>[주관식]</code> 을 붙이거나, <code>모범답안:</code> 줄이 있으면 자동으로 주관식으로 인식됩니다.</li>
           <li>보기(①②③④)가 없는 문제도 자동으로 주관식 처리됩니다.</li>
+        </ul>
+
+        <h4>1-1. 권장(인라인) 형식 — 연결형</h4>
+        <p>맨 앞에 <code>[연결형]</code> 을 붙이고, <strong>왼쪽 = 오른쪽</strong> 형태로 <em>정답 짝</em>을 한 줄에 하나씩 적습니다.</p>
+        <pre><code>[연결형] 다음 디자인 패턴과 설명을 연결하세요.
+싱글톤 = 인스턴스를 하나만 보장한다
+옵저버 = 상태 변화를 자동 통지한다
+팩토리 = 객체 생성을 캡슐화한다
+해설: 패턴별 핵심 의도를 떠올리면 쉽습니다. (선택)</code></pre>
+        <ul>
+          <li>구분자는 <code>=</code> 외에 <code>-&gt;</code> · <code>→</code> · <code>::</code> 도 됩니다.</li>
+          <li>적은 줄이 <strong>정답 짝</strong>입니다. 실제 화면에서는 오른쪽 보기 순서가 자동으로 섞여 표시됩니다.</li>
+          <li>각 왼쪽 항목 옆 <strong>드롭다운</strong>에서 오른쪽 보기를 고르고, 제출하면 짝마다 ⭕/❌ 가 표시됩니다.</li>
+          <li>채점은 <strong>한 문제의 모든 짝을 맞혀야</strong> 정답 1개로 집계됩니다.</li>
         </ul>
 
         <h4>1-2. 분리(레거시) 형식 — 기존 문제.txt 호환</h4>
@@ -196,6 +233,17 @@ Q2. 정답: ①
     question: "질문 내용",
     modelAnswer: "모범 답안 (여러 줄 가능)",
     explanation: "채점 참고용 핵심 키워드 (선택)"
+  },
+  // ── 연결형 ──
+  {
+    type: "matching",
+    question: "다음 디자인 패턴과 설명을 연결하세요.",
+    pairs: [                       // [왼쪽, 정답 오른쪽] — 정답 짝을 그대로 적습니다
+      ["싱글톤", "인스턴스를 하나만 보장한다"],
+      ["옵저버", "상태 변화를 자동 통지한다"],
+      ["팩토리", "객체 생성을 캡슐화한다"]
+    ],
+    explanation: "패턴별 핵심 의도를 떠올리면 쉽습니다. (선택)"
   }
 ];</code></pre>
         <table class="rule-table">
@@ -208,6 +256,7 @@ Q2. 정답: ①
             <tr><td><code>explanation</code></td><td>문자열</td><td>선택</td><td>전체 해설</td></tr>
             <tr><td><code>choiceExplanations</code></td><td>문자열 배열</td><td>선택</td><td>보기 순서대로 1:1, 각 보기 아래 표시</td></tr>
             <tr><td><code>modelAnswer</code></td><td>문자열</td><td>주관식 ✅</td><td>모범 답안</td></tr>
+            <tr><td><code>pairs</code></td><td>[왼쪽, 오른쪽] 배열</td><td>연결형 ✅</td><td>정답 짝 목록. 화면에선 오른쪽 보기가 자동으로 섞여 표시됨</td></tr>
           </tbody>
         </table>
 
@@ -215,7 +264,8 @@ Q2. 정답: ①
         <ul>
           <li><strong>한 페이지에 한 문제씩</strong> 표시됩니다.</li>
           <li><strong>객관식</strong>: 보기를 선택하면 즉시 정답/오답이 색으로 표시되고, 각 보기 아래에 (있다면) 해설이 나옵니다.</li>
-          <li><strong>주관식</strong>: 답을 제출하면 모범 답안이 나오고, <code>⭕ 맞음 / ❌ 틀림</code> 으로 직접 채점합니다.</li>
+          <li><strong>주관식</strong>: 답을 제출하면 모범 답안이 나오고, <code>⭕ 맞음 / ❌ 틀림</code> 으로 직접 채점합니다. (제출했다면 채점을 해야 다음으로 넘어갈 수 있습니다)</li>
+          <li><strong>연결형</strong>: 각 왼쪽 항목의 드롭다운에서 오른쪽 보기를 고른 뒤 제출하면 짝마다 ⭕/❌ 가 표시됩니다. 모든 짝을 맞혀야 정답입니다.</li>
           <li>모든 문제를 풀면 <strong>정답 수 / 전체 문항 수</strong> 와 <strong>정답률(%)</strong> 이 표시됩니다.</li>
         </ul>
 
@@ -227,6 +277,8 @@ Q2. 정답: ①
     </div>
   </div>
 
+  <script src="src/rule-data.js"></script>
+  <script src="src/rule.js"></script>
   <script src="src/parser.js"></script>
   <script src="src/quiz.js"></script>
 </body>
