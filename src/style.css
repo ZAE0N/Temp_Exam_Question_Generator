@@ -232,7 +232,7 @@ code {
 .score-time strong { color: var(--primary-dark); font-variant-numeric: tabular-nums; }
 
 /* ---- '푼 문제로 이동' 커스텀 드롭다운 (헤더, 타이머 왼쪽) ---- */
-.quiz-jump { position: relative; width: 220px; }
+.quiz-jump { position: relative; width: 270px; }
 .quiz-jump-btn {
   width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
   padding: 5px 8px; font-size: 0.8rem; text-align: left;

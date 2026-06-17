@@ -759,7 +759,14 @@ function renderQuizJump() {
   const list = candidates.filter((idx) => idx !== state.index);
 
   $("#quiz-jump-btn").disabled = list.length === 0;
-  $("#quiz-jump-label").textContent = list.length ? "문제로 이동…" : "이동할 문제 없음";
+  // 버튼 라벨: 항목이 있으면 현재 보고 있는 문제의 이름(미리보기), 없으면 안내 문구
+  if (list.length) {
+    const curPreview = (state.questions[state.index].question || "").split("\n")[0];
+    const curShort = curPreview.length > 28 ? curPreview.slice(0, 28) + "…" : curPreview;
+    $("#quiz-jump-label").textContent = `Q${displayNumOf(state.index)}. ${curShort}`;
+  } else {
+    $("#quiz-jump-label").textContent = "이동할 문제 없음";
+  }
 
   const menu = $("#quiz-jump-menu");
   menu.innerHTML = "";
